@@ -17,3 +17,6 @@ Given number of clusters, cluster assignment and gene exp. matrix,
 ### i.e. if there exitst 3 clusters, the signature of cluster 1 is defined as: 1v2, 1v3 differentially expressed and has higher mean expression
 
 
+### The first version: we used v0506 (hsa05200) clustering results (stored at ~/HCCDB_Subtypes/results/v0616_v1_sigs/)
+
+
