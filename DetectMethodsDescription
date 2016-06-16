@@ -1,0 +1,19 @@
+We try new detection methods now:
+
+Given number of clusters, cluster assignment and gene exp. matrix, 
+
+###	  detect representative genes of every single cluster by:
+
+###   For a specific cluster k ,compare it with all others seperately 
+
+###   1. Detection of significantly differential expressed genes:
+###    (1). t.test (fdr<1e-5) and
+###    (2). wilcoxon.test (fdr<1e-5)
+###   2. Higher expression than other clusters
+###
+###   The intersection of all comparision results as final signals
+
+
+### i.e. if there exitst 3 clusters, the signature of cluster 1 is defined as: 1v2, 1v3 differentially expressed and has higher mean expression
+
+
