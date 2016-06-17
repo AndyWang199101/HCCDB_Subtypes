@@ -20,7 +20,7 @@ args <- commandArgs(TRUE)
 ###	  1. EXPRESSION_MATRIX_S1: i.e. processed matrix 
 file <- args[1]
 print(file)
-data <- read.table( file, header = T, sep = '\t' )     #### read in files
+data <- read.table( file, header = T, sep = ',' )     #### read in files
 data_matrix <- as.matrix( data[,c(-1,-2)] )            #### save only exp data in matrix form
 ###   2. LABEL_OF_DATA (the same as step1,such as hccdb1,dnameth.iqr10 etc)
 output <- args[2]
