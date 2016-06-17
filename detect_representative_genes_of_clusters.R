@@ -29,8 +29,26 @@ k <- as.numeric( args[3] )   #### factorization rank of NMF
 ###   4. Cluster assignment (contains two named columns: Samples___Cluster)
 cluster.file <- args[4]
 data_cluster <- read.table( cluster.file,header = T,sep = "\t",row.names = 1 )
-###	  4. VERSION (the same as step1, such as a date v0616)
+
+###	  5. VERSION (the same as step1, such as a date v0616)
 version <- args[5]
+
+###   6. Gene file: we hope it contains a colname to specify whether gene entrez id (col: Entrez) or symbol (col: Symbol) is given
+gene.file <- args[6]
+check_gene <- FALSE
+if( !is.na(gene.file) ){
+  gene_name <- read.table( gene.file,header = T,sep = "\t" )
+  if( "Entrez" %in% colnames(gene_name) ){
+    check_gene = TRUE
+    check_name = "Entrez"
+  }
+  if( "Symbol" %in% colnames(gene_name) ){
+    check_gene = TRUE
+    check_name = "Symbol"
+  } 
+} else{
+  messgae( "NO appropriate candidate genes file is provided." )
+}
 
 ###
 ###	examples: 
@@ -89,6 +107,17 @@ data_matrix[index] <- 0
 samples <- rownames( data_cluster )
 samples.cluster <- data_cluster$Cluster
 data_matrix_for_cluster_analysis <- data_matrix[ samples ]
+
+if( check_gene ){
+  if( check_name == "Entrez"){
+    gene_index <- which( entrez %in% gene_name$Entrez )
+    data_matrix_for_cluster_analysis <- data_matrix_for_cluster_analysis[gene_index,]
+  }
+  if( check_name == "Symbol"){
+    gene_index <- which( symbol %in% gene_name$Symbol )
+    data_matrix_for_cluster_analysis <- data_matrix_for_cluster_analysis[gene_index,]
+  }
+}
 
 ###################################Obtain signatures####################################
 #### Now suppose there are k clusters###############
