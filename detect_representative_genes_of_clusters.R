@@ -22,6 +22,10 @@ file <- args[1]
 print(file)
 data <- read.table( file, header = T, sep = ',' )     #### read in files
 data_matrix <- as.matrix( data[,c(-1,-2)] )            #### save only exp data in matrix form
+
+message( "------ Dimension of original data matrix ------" )
+print( dim(data_matrix) )
+
 ###   2. LABEL_OF_DATA (the same as step1,such as hccdb1,dnameth.iqr10 etc)
 output <- args[2]
 ###   3. NUMBER_OF_CLUSTERS
@@ -49,6 +53,10 @@ if( !is.na(gene.file) ){
 } else{
   messgae( "NO appropriate candidate genes file is provided." )
 }
+
+##### DEFINE: the fdr threshold #####
+fdr.threshold <- 1e-5
+
 
 ###
 ###	examples: 
@@ -94,10 +102,24 @@ if( length(delete.index)>0 ){
   symbol <- data$Symbol[delete.index]
 }
 
-rownames(data_matrix) <- entrez
-
+############################  delete sd = 0 rows ######################################
 index <- which( is.na(data_matrix) )
 data_matrix[index] <- 0
+
+delete.index.sd <- c()
+for( i in 1:dim(data_matrix)[1] ){
+  if( sd( data_matrix[i,] ) == 0 ){
+    delete.index.sd <- c( delete.index.sd,-i )
+  }
+}
+print( length(delete.index.sd) )
+if( length(delete.index.sd)>0 ){
+  data_matrix <- data_matrix[delete.index.sd,]
+  entrez <- entrez[delete.index.sd]
+  symbol <- data$Symbol[delete.index.sd]
+}
+
+rownames(data_matrix) <- entrez
 
 #####
 ## rows: genes
@@ -106,33 +128,47 @@ data_matrix[index] <- 0
 
 samples <- rownames( data_cluster )
 samples.cluster <- data_cluster$Cluster
-data_matrix_for_cluster_analysis <- data_matrix[ samples ]
+data_matrix_for_cluster_analysis <- data_matrix[ ,samples ]
+
+message( "------ Dimension of data matrix after selecting patients ------" )
+print( dim(data_matrix_for_cluster_analysis) )
+
 
 if( check_gene ){
   if( check_name == "Entrez"){
     gene_index <- which( entrez %in% gene_name$Entrez )
+    #print(gene_index)
     data_matrix_for_cluster_analysis <- data_matrix_for_cluster_analysis[gene_index,]
+    entrez <- entrez[ gene_index ]
+    symbol <- symbol[ gene_index ]
   }
   if( check_name == "Symbol"){
     gene_index <- which( symbol %in% gene_name$Symbol )
+    #print(gene_index)
     data_matrix_for_cluster_analysis <- data_matrix_for_cluster_analysis[gene_index,]
+    entrez <- entrez[ gene_index ]
+    symbol <- symbol[ gene_index ]
   }
 }
+
+message( "------ Dimension of data matrix after selecting genes ------" )
+print( dim(data_matrix_for_cluster_analysis) )
+
 
 ###################################Obtain signatures####################################
 #### Now suppose there are k clusters###############
 #### t.test + wilcoxon.test
 
 gene.num <- dim(data_matrix_for_cluster_analysis)[1]
-
+message( "------ Number of signatures in each cluster ------" )
 for( cluster in 1:k ){
-  cluster1 <- which( cluster.index == cluster )
+  cluster1 <- which( samples.cluster == cluster )
   genes_ID <- entrez
   genes_Symbol <- symbol
   
   for( comparison in 1:k ){
     if( comparison != cluster ){
-      cluster2 <- which( cluster.index == comparison  )
+      cluster2 <- which( samples.cluster == comparison  )
       ### t.test
       t.pval <- array( 0,dim=gene.num )
       names( t.pval ) <- rownames( data_matrix_for_cluster_analysis )
@@ -141,10 +177,18 @@ for( cluster in 1:k ){
       ### colnames(avg.exp) <- c( "MeanOfCluster1","MeanOfCluster2" )
       
       for( i in 1:gene.num ){
-        t.stat <- t.test( data_matrix_for_cluster_analysis[i,cluster1],data_matrix_for_cluster_analysis[i,cluster2] )
-        t.pval[i] <- t.stat$p.value
-        avg.exp[i,1] <- t.stat$estimate[1]
-        avg.exp[i,2] <- t.stat$estimate[2]
+        obj <- try( t.test( data_matrix_for_cluster_analysis[i,cluster1],data_matrix_for_cluster_analysis[i,cluster2] ), silent = TRUE )
+        if( is( obj,'try-error' ) ){
+          t.pval[i] <- NA
+          message( "The gene has happened an t.test-error" )
+          print( symbol[i] )
+        }
+        else{
+          t.stat <- obj 
+          t.pval[i] <- t.stat$p.value
+          avg.exp[i,1] <- t.stat$estimate[1]
+          avg.exp[i,2] <- t.stat$estimate[2]
+        }
       }
       
       t.pval.adjust <- p.adjust( t.pval,method = "BH" )
@@ -173,31 +217,30 @@ for( cluster in 1:k ){
         wilcox.pval = wilcox.pval,
         wilcox.pval.adjust = wilcox.pval.adjust
       )
-      index1 <- which( data.diff$t.pval.adjust < 1e-5 & data.diff$wilcox.pval.adjust < 1e-5 & data.diff$MeanOfCluster1 > data.diff$MeanOfCluster2 )
+      index1 <- which( data.diff$t.pval.adjust < fdr.threshold & data.diff$wilcox.pval.adjust < fdr.threshold & data.diff$MeanOfCluster1 > data.diff$MeanOfCluster2 )
+      #print( length(index1) )
       genes_ID <- intersect( data.diff$Genes[index1],genes_ID )
-      genes_symbol <- intersect( data.diff$Symbol[index1],genes_symbol )
+      genes_Symbol <- intersect( data.diff$Symbol[index1],genes_Symbol )
     }
   }
   
-  output_sig <- data.frame(
-    genes_ID = genes_ID,
-    genes_Symbol = genes_Symbol
-  )
-  
-  write.table( output_sig,file = paste0(subfolder,output,".",cluster,".sig"),quote = F,row.names = F,col.names = F )
-  
   number_of_sigs <- length( genes_ID )
-  
   print( number_of_sigs )
   
   if( number_of_sigs > 0 ){
+    output_sig <- data.frame(
+      genes_ID = genes_ID,
+      genes_Symbol = genes_Symbol
+    )
+    
+    write.table( output_sig,file = paste0(subfolder,output,".",cluster,".sig"),quote = F,row.names = F,col.names = F )
     ### plot boxplot
     for( i in 1:number_of_sigs ){
       temp.symbol <- output_sig$genes_Symbol[i]
       temp.id <- output_sig$genes_ID[i]
       pdf( paste0( subsubfolder,temp.id,'_',strsplit(temp.symbol,split = "/")[[1]][1],'.pdf' ),height=3,width=5 )
       data_plot <- data.frame(
-        exp = data_matrix_for_cluster_analysis[temp.id,],
+        exp = data_matrix_for_cluster_analysis[which( rownames(data_matrix_for_cluster_analysis) == temp.id ),],
         cluster = samples.cluster
       )
       p <- ggplot( data_plot,aes(x=factor(cluster),y=exp,fill=colors[cluster]) )
