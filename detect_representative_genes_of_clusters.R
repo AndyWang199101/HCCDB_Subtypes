@@ -50,10 +50,11 @@ if( !is.na(gene.file) ){
     check_gene = TRUE
     check_name = "Symbol"
   } 
-} else{
-  messgae( "NO appropriate candidate genes file is provided." )
+} 
+if( !check_gene){
+  message( "NO appropriate candidate genes file is provided." )
 }
-
+  
 ##### DEFINE: the fdr threshold #####
 fdr.threshold <- 1e-5
 
@@ -100,6 +101,27 @@ if( length(delete.index)>0 ){
   data_matrix <- data_matrix[delete.index,]
   entrez <- entrez[delete.index]
   symbol <- data$Symbol[delete.index]
+}
+
+if( length(delete.index)>0 ){
+  data_matrix <- data_matrix[delete.index,]
+  entrez <- entrez[delete.index]
+  symbol <- data$Symbol[delete.index]
+}
+
+symbol.count <- table(symbol)
+dup <- names( which( symbol.count > 1 ) ) 
+delete.index.symbol <- c()
+for( i in 1:length(dup) ){
+  temp <- dup[i]
+  temp.index <- which( symbol == temp )
+  delete.index.symbol <- c(delete.index.symbol,-temp.index[-1])
+}
+
+if( length(delete.index.symbol)>0 ){
+  data_matrix <- data_matrix[delete.index.symbol,]
+  entrez <- entrez[delete.index.symbol]
+  symbol <- data$Symbol[delete.index.symbol]
 }
 
 ############################  delete sd = 0 rows ######################################
@@ -219,8 +241,10 @@ for( cluster in 1:k ){
       )
       index1 <- which( data.diff$t.pval.adjust < fdr.threshold & data.diff$wilcox.pval.adjust < fdr.threshold & data.diff$MeanOfCluster1 > data.diff$MeanOfCluster2 )
       #print( length(index1) )
+      print( length(genes_ID)-length(genes_Symbol) )
       genes_ID <- intersect( data.diff$Genes[index1],genes_ID )
       genes_Symbol <- intersect( data.diff$Symbol[index1],genes_Symbol )
+      print( length(genes_ID)-length(genes_Symbol) )
     }
   }
   
