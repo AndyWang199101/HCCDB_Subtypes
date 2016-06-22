@@ -2,6 +2,8 @@
 
 ### 0617 modified: add new parameters: all candidate genes
 
+### 0621 modified: add anova analysis
+
 ### Description: Given number of clusters, cluster assignment and gene exp. matrix, 
 
 ###	  detect representative genes of every single cluster by:
@@ -57,7 +59,7 @@ if( !check_gene){
   
 ##### DEFINE: the fdr threshold #####
 fdr.threshold <- 1e-5
-
+ANOVA <- FALSE
 
 ###
 ###	examples: 
@@ -176,90 +178,137 @@ if( check_gene ){
 message( "------ Dimension of data matrix after selecting genes ------" )
 print( dim(data_matrix_for_cluster_analysis) )
 
+detectSig <- function( exp.matrix,cluster.num,cluster.assignment,method = "anova",fdr.threshold = 1e-5 ){
+  ### description: 
+  ### exp.matrix: row(genes) col(patients)
+  ### return the representative index for each cluster (a list)
+  representive.genes <- list()
+  
+  gene.num <- dim(exp.matrix)[1]
+  patient.num <- dim(exp.matrix)[2]
+  ### Option: method aov("anova"), t.test("t"), wilcoxon.test("wilcox"), t&wilcox("t+wilcox")
+  avg.exp <- matrix( 0,nrow = gene.num,ncol = cluster.num )
+  rownames(avg.exp) <- row.names( exp.matrix )
+  for( cluster in 1:cluster.num ){
+    temp.index <- which( cluster.assignment == cluster )
+    for( i in 1:gene.num ){
+      avg.exp[i,cluster] <- mean( exp.matrix[i,temp.index] )
+    }
+  }
+  
+  if( method == "t+wilcox" ){
+    message( "Method adopted: t+wilcox test" )
+    for( cluster in 1:cluster.num ){
+      cluster1 <- which( cluster.assignment == cluster )
+      gene.index <- seq( gene.num )
+      for( comparison in 1:cluster.num ){
+        if( comparison != cluster ){
+          cluster2 <- which( cluster.assignment == comparison  )
+          ### t.test
+          t.pval <- array( 0,dim=gene.num )
+          names( t.pval ) <- rownames( exp.matrix )
+          for( i in 1:gene.num ){
+              obj <- try( t.test( exp.matrix[i,cluster1],exp.matrix[i,cluster2] ), silent = TRUE )
+              if( is( obj,'try-error' ) ){
+                t.pval[i] <- NA
+                message( "The gene has happened an t.test-error" )
+                print( rownames(exp.matrix)[i] )
+              }
+              else{
+                t.stat <- obj 
+                t.pval[i] <- t.stat$p.value
+              }
+              t.pval.adjust <- p.adjust( t.pval,method = "BH" )
+              names(t.pval.adjust) <- rownames( exp.matrix )
+          }
+              ### wilcox.test
+          wilcox.pval <- array( 0,dim=gene.num )
+          names( wilcox.pval ) <- rownames( exp.matrix )
+              
+          for( i in 1:gene.num ){
+            wil.stat <- wilcox.test( exp.matrix[i,cluster1],exp.matrix[i,cluster2] )
+            wilcox.pval[i] <- wil.stat$p.value
+          }
+              
+          wilcox.pval.adjust <- p.adjust( wilcox.pval,method = "BH" )
+          names(wilcox.pval.adjust) <- rownames( exp.matrix )
+          
+              
+          ### output 
+          index1 <- which( t.pval.adjust < fdr.threshold & 
+                             wilcox.pval.adjust < fdr.threshold & 
+                             avg.exp[,cluster] > avg.exp[,comparison] )
+          
+          gene.index <- intersect( index1,gene.index )
+        }
+      }
+        
+      number_of_sigs <- length( genes_ID )
+      print( number_of_sigs )
+      if( number_of_sigs == 0 ){
+        representive.genes <- c(representive.genes,NA)
+      }
+        
+      if( number_of_sigs > 0 ){
+        representive.genes <- c( representive.genes,list(gene.index) )
+      }
+    }
+  }
+  
+  if( method == "anova" ){
+    message("Method adopted: anova")
+    aov.pvalue <- array( 0,dim = gene.num )
+    for( i in 1:gene.num ){
+      data_aov <- data.frame(
+        exp = exp.matrix[i,],
+        group = factor( cluster.assignment )
+      )
+      data.fit <- lm( exp ~ group, data = data_aov )
+      aov.result <- anova( data.fit )
+      aov.pvalue[i] <- aov.result$`Pr(>F)`[1]
+    }
+    aov.pvalue.adjust <- p.adjust( aov.pvalue,method = "BH" )
+    aov.index <- which( aov.pvalue.adjust < fdr.threshold )
+    exp.index <- apply( avg.exp,1,which.max )
+    for( cluster in 1:cluster.num ){
+      cluster.exp.index <- which( exp.index == cluster )
+      index1 <- intersect( aov.index,cluster.exp.index )
+      if( length(index1) > 0 ){
+        representive.genes <- c( representive.genes,list(index1) )
+      }
+      else{
+        representive.genes <- c(representive.genes,NA)
+      }
+    }
+  }
+  return( representive.genes )
+}
 
 ###################################Obtain signatures####################################
 #### Now suppose there are k clusters###############
 #### t.test + wilcoxon.test
 
 gene.num <- dim(data_matrix_for_cluster_analysis)[1]
+representative.genes <- detectSig( exp.matrix = data_matrix_for_cluster_analysis, cluster.num = k,cluster.assignment = samples.cluster )
+
 message( "------ Number of signatures in each cluster ------" )
-for( cluster in 1:k ){
-  cluster1 <- which( samples.cluster == cluster )
-  genes_ID <- entrez
-  genes_Symbol <- symbol
-  
-  for( comparison in 1:k ){
-    if( comparison != cluster ){
-      cluster2 <- which( samples.cluster == comparison  )
-      ### t.test
-      t.pval <- array( 0,dim=gene.num )
-      names( t.pval ) <- rownames( data_matrix_for_cluster_analysis )
-      avg.exp <- matrix( 0,nrow = gene.num,ncol = 2 )
-      rownames(avg.exp) <- row.names( data_matrix_for_cluster_analysis )
-      ### colnames(avg.exp) <- c( "MeanOfCluster1","MeanOfCluster2" )
-      
-      for( i in 1:gene.num ){
-        obj <- try( t.test( data_matrix_for_cluster_analysis[i,cluster1],data_matrix_for_cluster_analysis[i,cluster2] ), silent = TRUE )
-        if( is( obj,'try-error' ) ){
-          t.pval[i] <- NA
-          message( "The gene has happened an t.test-error" )
-          print( symbol[i] )
-        }
-        else{
-          t.stat <- obj 
-          t.pval[i] <- t.stat$p.value
-          avg.exp[i,1] <- t.stat$estimate[1]
-          avg.exp[i,2] <- t.stat$estimate[2]
-        }
-      }
-      
-      t.pval.adjust <- p.adjust( t.pval,method = "BH" )
-      names(t.pval.adjust) <- rownames( data_matrix_for_cluster_analysis )
-      
-      ### wilcox.test
-      wilcox.pval <- array( 0,dim=gene.num )
-      names( wilcox.pval ) <- rownames( data_matrix_for_cluster_analysis )
-      
-      for( i in 1:gene.num ){
-        wil.stat <- wilcox.test( data_matrix_for_cluster_analysis[i,cluster1],data_matrix_for_cluster_analysis[i,cluster2] )
-        wilcox.pval[i] <- wil.stat$p.value
-      }
-      
-      wilcox.pval.adjust <- p.adjust( wilcox.pval,method = "BH" )
-      names(wilcox.pval.adjust) <- rownames( data_matrix_for_cluster_analysis )
-      
-      ### output 
-      data.diff <- data.frame( 
-        Genes = rownames(data_matrix_for_cluster_analysis),
-        Symbol = symbol,
-        MeanOfCluster1 = avg.exp[,1],
-        MeanOfCluster2 = avg.exp[,2],
-        t.pval = t.pval,
-        t.pval.adjust = t.pval.adjust,
-        wilcox.pval = wilcox.pval,
-        wilcox.pval.adjust = wilcox.pval.adjust
-      )
-      index1 <- which( data.diff$t.pval.adjust < fdr.threshold & data.diff$wilcox.pval.adjust < fdr.threshold & data.diff$MeanOfCluster1 > data.diff$MeanOfCluster2 )
-      #print( length(index1) )
-      print( length(genes_ID)-length(genes_Symbol) )
-      genes_ID <- intersect( data.diff$Genes[index1],genes_ID )
-      genes_Symbol <- intersect( data.diff$Symbol[index1],genes_Symbol )
-      print( length(genes_ID)-length(genes_Symbol) )
-    }
+for( i in 1:length(representative.genes) ){
+  gene.index <- representative.genes[[ i ]]
+  if( is.na(gene.index[1]) ){
+    message( "No representative genes were detected in cluster:" )
+    print(i)
   }
-  
-  number_of_sigs <- length( genes_ID )
-  print( number_of_sigs )
-  
-  if( number_of_sigs > 0 ){
+  else{
+    genes_ID <- entrez[gene.index]
+    genes_Symbol <- symbol[gene.index]
     output_sig <- data.frame(
       genes_ID = genes_ID,
       genes_Symbol = genes_Symbol
     )
-    
-    write.table( output_sig,file = paste0(subfolder,output,".",cluster,".sig"),quote = F,row.names = F,col.names = F )
-    ### plot boxplot
-    for( i in 1:number_of_sigs ){
+    print(length(gene.index))
+    write.table( output_sig,file = paste0(subfolder,output,".",i,".sig"),quote = F,row.names = F,col.names = F )
+      ### plot boxplot
+    for( i in 1:length(gene.index) ){
       temp.symbol <- output_sig$genes_Symbol[i]
       temp.id <- output_sig$genes_ID[i]
       pdf( paste0( subsubfolder,temp.id,'_',strsplit(temp.symbol,split = "/")[[1]][1],'.pdf' ),height=3,width=5 )
@@ -274,6 +323,8 @@ for( cluster in 1:k ){
     }
   }
 }
+ 
+  
 
 
 
