@@ -28,6 +28,8 @@ Given number of clusters, cluster assignment and gene exp. matrix,
 ### We use ANOVA pre-selection the differentially expressed genes;
 ### The representative gene of some cluster has highest mean expression among all clusters.
 
-### only test genes in this pathway (stored at ~HCCDB_Subtypes/results/v0616_aov_sigs/)
+### only test genes in this pathway (stored at ~HCCDB_Subtypes/results/v0616_aov_hsa05200_sigs/)
+### test all literature-based genes (~HCCDB_Subtypes/results/v0616_aov_pubmed_sigs/)
+### test all measured genes (~HCCDB_Subtypes/results/v0616_aov_sigs/)
 
 
