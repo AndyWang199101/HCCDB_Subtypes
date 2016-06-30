@@ -19,9 +19,9 @@ Given number of clusters, cluster assignment and gene exp. matrix,
 
 ### The first version: we used v0506 (hsa05200) clustering results 
 
-### and (a). test genes in this pathway(stored at ~/HCCDB_Subtypes/results/v0616_v1_sigs/)
-###     (b). test all literature-based genes (~/HCCDB_Subtypes/results/v0616_v2_sigs/)
-###     (c). test all measured genes (~/HCCDB_Subtypes/results/v0616_v3_sigs/)
+### and (a). test genes in this pathway(stored at ~/HCCDB_Subtypes/results/v0616_1v1_hsa05200_sigs/)
+###     (b). test all literature-based genes (~/HCCDB_Subtypes/results/v0616_1v1_pubmed_sigs/)
+###     (c). test all measured genes (~/HCCDB_Subtypes/results/v0616_1v1_all_sigs/)
 
 
 ### 06.21 update:
@@ -30,7 +30,7 @@ Given number of clusters, cluster assignment and gene exp. matrix,
 
 ### only test genes in this pathway (stored at ~HCCDB_Subtypes/results/v0616_aov_hsa05200_sigs/)
 ### test all literature-based genes (~HCCDB_Subtypes/results/v0616_aov_pubmed_sigs/)
-### test all measured genes (~HCCDB_Subtypes/results/v0616_aov_sigs/)
+### test all measured genes (~HCCDB_Subtypes/results/v0616_aov_all_sigs/)
 
 
 ### 0629 update
@@ -40,6 +40,6 @@ Given number of clusters, cluster assignment and gene exp. matrix,
 ### and still, store the results in: 
 ### only test genes in this pathway (stored at ~HCCDB_Subtypes/results/v0616_1vall_hsa05200_sigs/)
 ### test all literature-based genes (~HCCDB_Subtypes/results/v0616_1vall_pubmed_sigs/)
-### test all measured genes (~HCCDB_Subtypes/results/v0616_1vall_sigs/)
+### test all measured genes (~HCCDB_Subtypes/results/v0616_1vall_all_sigs/)
 
 
