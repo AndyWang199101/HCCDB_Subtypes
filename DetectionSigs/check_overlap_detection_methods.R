@@ -41,11 +41,6 @@ library("VennDiagram")
 sig <- read.table( "/data/home/dwang/HCCDB_Subtypes/parameters/sig.file.0630",header = F )
 sig <- sig$V1
 
-data.sig <- c()
-data.method1 <- c()
-data.method2 <- c()
-data.overlap <- c() ### format: num1;num2;overlap
-
 colors <- c("cornflowerblue", "green", "yellow", "darkorchid1") 
 
 for( temp in sig ){
