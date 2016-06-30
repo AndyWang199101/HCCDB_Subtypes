@@ -1,0 +1,45 @@
+We try new detection methods now:
+
+Given number of clusters, cluster assignment and gene exp. matrix, 
+
+###	  detect representative genes of every single cluster by:
+
+###   For a specific cluster k ,compare it with all others seperately 
+
+###   1. Detection of significantly differential expressed genes:
+###    (1). t.test (fdr<1e-5) and
+###    (2). wilcoxon.test (fdr<1e-5)
+###   2. Higher expression than other clusters
+###
+###   The intersection of all comparision results as final signals
+
+
+### i.e. if there exitst 3 clusters, the signature of cluster 1 is defined as: 1v2, 1v3 differentially expressed and has higher mean expression
+
+
+### The first version: we used v0506 (hsa05200) clustering results 
+
+### and (a). test genes in this pathway(stored at ~/HCCDB_Subtypes/results/v0616_1v1_hsa05200_sigs/)
+###     (b). test all literature-based genes (~/HCCDB_Subtypes/results/v0616_1v1_pubmed_sigs/)
+###     (c). test all measured genes (~/HCCDB_Subtypes/results/v0616_1v1_all_sigs/)
+
+
+### 06.21 update:
+### We use ANOVA pre-selection the differentially expressed genes;
+### The representative gene of some cluster has highest mean expression among all clusters.
+
+### only test genes in this pathway (stored at ~HCCDB_Subtypes/results/v0616_aov_hsa05200_sigs/)
+### test all literature-based genes (~HCCDB_Subtypes/results/v0616_aov_pubmed_sigs/)
+### test all measured genes (~HCCDB_Subtypes/results/v0616_aov_all_sigs/)
+
+
+### 0629 update
+### we still use t-test + wilcoxon test, but test 1v2+3, 2v1+3, 3v1+2, 
+### which means test the genes in one specific cluster against all remaining patients
+
+### and still, store the results in: 
+### only test genes in this pathway (stored at ~HCCDB_Subtypes/results/v0616_1vall_hsa05200_sigs/)
+### test all literature-based genes (~HCCDB_Subtypes/results/v0616_1vall_pubmed_sigs/)
+### test all measured genes (~HCCDB_Subtypes/results/v0616_1vall_all_sigs/)
+
+
