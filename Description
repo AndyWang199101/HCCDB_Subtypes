@@ -3,17 +3,59 @@ For the current version, we adopted the following analysis strategies:
 1. Use literature-based genes (with no further gene selection procedure)
 
 2. Perform NMF and use the following number of clusters for each cluster:
-   HCCDB1
-   HCCDB
-   HCCDB
-   HCCDB
-   HCCDB
-   HCCDB
+   HCCDB1  2
+   HCCDB13 2
+   HCCDB11 2
+   HCCDB12 3
+   HCCDB3  5
+   HCCDB15 2
+   HCCDB8  2
+   HCCDB6  3
+   HCCDB9  2
+   HCCDB4  3
+   
+   results stored at: /data/home/dwang/HCCDB_Subtypes/results/pubmed_cluster/v0608_jyzhou/
 
 3. Detection signatures of each cluster
    Method: anova
    Threshold: 1e-5
    Candidate gene sets: all literature genes
+   
+  70 HCCDB1.1.sig
+  63 HCCDB1.2.sig
+
+  77 HCCDB13.1.sig
+ 140 HCCDB13.2.sig
+
+  53 HCCDB11.1.sig
+  74 HCCDB11.2.sig
+
+ 50 HCCDB12.1.sig
+ 14 HCCDB12.2.sig
+ 21 HCCDB12.3.sig
+
+  97 HCCDB3.1.sig
+ 145 HCCDB3.2.sig
+  77 HCCDB3.3.sig
+  94 HCCDB3.4.sig
+  99 HCCDB3.5.sig
+
+ 176 HCCDB15.1.sig
+ 361 HCCDB15.2.sig
+
+ 35 HCCDB8.1.sig
+ 36 HCCDB8.2.sig
+
+ 191 HCCDB6.1.sig
+ 147 HCCDB6.2.sig
+
+ 218 HCCDB4.1.sig
+ 293 HCCDB4.2.sig
+
+ 203 HCCDB9.1.sig
+  99 HCCDB9.2.sig
+
+   results stored at: /data/home/dwang/HCCDB_Subtypes/results/pubmed_cluster/v0630_pubmed_cluster_pubmed_sigs/
 
 4. Count the number of datasets that some signature was observed
 
