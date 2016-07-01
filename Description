@@ -1,0 +1,20 @@
+For the current version, we adopted the following analysis strategies:
+
+1. Use literature-based genes (with no further gene selection procedure)
+
+2. Perform NMF and use the following number of clusters for each cluster:
+   HCCDB1
+   HCCDB
+   HCCDB
+   HCCDB
+   HCCDB
+   HCCDB
+
+3. Detection signatures of each cluster
+   Method: anova
+   Threshold: 1e-5
+   Candidate gene sets: all literature genes
+
+4. Count the number of datasets that some signature was observed
+
+5. Detection gene modules based on previous signatures 
