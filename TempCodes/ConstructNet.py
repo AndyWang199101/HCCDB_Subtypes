@@ -35,14 +35,15 @@ import scipy.stats as stats
 import sys
 
 sig_files = sys.argv[1]
-threshold = int(sys.argv[2])
-prefix = sys.argv[3]
-background = sys.argv[4]
+node_threshold = int(sys.argv[2])
+edge_threshold = int(sys.argv[3])
+prefix = sys.argv[4]
+background = sys.argv[5]
 
 
 
-node_file_name = prefix+'node_file_'+str(threshold)+'.txt'
-edge_file_name = prefix+'edge_file_'+str(threshold)+'.txt'
+node_file_name = prefix+'node_file_'+str(node_threshold)+'_'+str(edge_threshold)+'.txt'
+edge_file_name = prefix+'edge_file_'+str(node_threshold)+"_"+str(edge_threshold)+'.txt'
 #def _hyper_geometric_log_pvalue( N,D1,D2 ):
 #    intersect = len( set(D1).intersection( set(D2) ) )
 #    cumulative_p = 0
@@ -71,7 +72,7 @@ for file in files:
     genes = [line.rstrip().split()[1] for line in fi]
     #print genes
     size = len(genes)
-    if size >= threshold:   ######################################################
+    if size >= node_threshold:   ######################################################
         nodes[temp] = genes
         node_file.write( '\t'.join([temp,dataset,cluster,str(size)])+'\n' )
     fi.close()
@@ -104,7 +105,7 @@ for i in range(len(nodes_list)-1):
                 continue
             hp = stats.hypergeom.sf( len(inter),len(all_genes),len(genes1),len(genes2)  )
             hp = -log( hp,10 )
-            if jaccard_sim > 0:
+            if jaccard_sim > 0 and hp > edge_threshold:
                 line = [Node1,Node2,str(jaccard_sim),str(hp)]
                 edge_file.write( '\t'.join( line ) +"\n" )
 
